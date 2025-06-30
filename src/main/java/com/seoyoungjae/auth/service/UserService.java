@@ -1,19 +1,17 @@
 package com.seoyoungjae.auth.service;
 
-import com.seoyoungjae.auth.domain.User;
-import com.seoyoungjae.auth.dto.UserDto;
-import com.seoyoungjae.auth.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.seoyoungjae.auth.domain.User;
+import com.seoyoungjae.auth.dto.UserDto;
+import com.seoyoungjae.auth.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
+
 @Service
 @RequiredArgsConstructor
-public class UserService implements UserDetailsService {
+public class UserService {
 
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
@@ -35,16 +33,5 @@ public class UserService implements UserDetailsService {
   public User findByEmail(String email) {
     return userRepository.findByEmail(email)
         .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-  }
-
-  @Override
-  public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-    User user = findByEmail(email);
-    return org.springframework.security.core.userdetails.User
-        .builder()
-        .username(user.getEmail())
-        .password(user.getPassword())
-        .roles(user.getRole().name()) // "USER" 등
-        .build();
   }
 }
