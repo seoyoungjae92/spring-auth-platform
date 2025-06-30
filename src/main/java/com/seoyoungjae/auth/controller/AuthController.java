@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -43,12 +45,8 @@ public class AuthController {
       String refreshToken = jwtUtil.generateRefreshToken(authentication.getName());
 
       // 저장
-      refreshTokenRepository.deleteByEmail(authentication.getName()); // 기존 토큰 제거
-      refreshTokenRepository.save(RefreshToken.builder()
-          .email(authentication.getName())
-          .token(refreshToken)
-          .expiration(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 7)
-          .build());
+      userService.saveRefreshToken(authentication.getName(), refreshToken,
+          System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 7);
 
       return ResponseEntity.ok(TokenResponse.builder()
           .accessToken(accessToken)
@@ -82,6 +80,10 @@ public class AuthController {
         .build());
   }
 
-
+  @PostMapping("/logout")
+  public ResponseEntity<String> logout(@AuthenticationPrincipal UserDetails userDetails) {
+    userService.logout(userDetails.getUsername());
+    return ResponseEntity.ok("로그아웃 완료");
+  }
 
 }

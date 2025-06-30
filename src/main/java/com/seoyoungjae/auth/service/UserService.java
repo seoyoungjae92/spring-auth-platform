@@ -3,10 +3,13 @@ package com.seoyoungjae.auth.service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.seoyoungjae.auth.domain.RefreshToken;
 import com.seoyoungjae.auth.domain.User;
 import com.seoyoungjae.auth.dto.UserDto;
+import com.seoyoungjae.auth.repository.RefreshTokenRepository;
 import com.seoyoungjae.auth.repository.UserRepository;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -14,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
 
   private final UserRepository userRepository;
+  private final RefreshTokenRepository refreshTokenRepository;
   private final PasswordEncoder passwordEncoder;
 
   public void register(UserDto userDto) {
@@ -33,5 +37,20 @@ public class UserService {
   public User findByEmail(String email) {
     return userRepository.findByEmail(email)
         .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+  }
+
+  @Transactional
+  public void logout(String email) {
+    refreshTokenRepository.deleteByEmail(email);
+  }
+
+  @Transactional
+  public void saveRefreshToken(String email, String refreshToken, long expiration) {
+    refreshTokenRepository.deleteByEmail(email);
+    refreshTokenRepository.save(RefreshToken.builder()
+        .email(email)
+        .token(refreshToken)
+        .expiration(expiration)
+        .build());
   }
 }
