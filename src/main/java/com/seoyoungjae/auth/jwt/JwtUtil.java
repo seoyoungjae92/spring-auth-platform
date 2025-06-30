@@ -22,6 +22,15 @@ public class JwtUtil {
         .compact();
   }
 
+  public String generateRefreshToken(String email) {
+    return Jwts.builder()
+        .setSubject(email)
+        .setIssuedAt(new Date())
+        .setExpiration(new Date(System.currentTimeMillis() + (1000L * 60 * 60 * 24 * 7))) // 7일
+        .signWith(key)
+        .compact();
+  }
+
   public String getEmailFromToken(String token) {
     return Jwts.parserBuilder()
         .setSigningKey(key)
@@ -47,5 +56,13 @@ public class JwtUtil {
         .parseClaimsJws(token)
         .getBody()
         .getSubject(); // username(email)
+  }
+
+  public boolean isTokenExpired(String token) {
+    return Jwts.parserBuilder().setSigningKey(key).build()
+        .parseClaimsJws(token)
+        .getBody()
+        .getExpiration()
+        .before(new Date());
   }
 }
