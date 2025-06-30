@@ -53,4 +53,8 @@ public class UserService {
         .expiration(expiration)
         .build());
   }
+
+  public boolean existsByEmail(String email) {
+    return userRepository.findByEmail(email).isPresent();
+  }
 }

@@ -86,4 +86,12 @@ public class AuthController {
     return ResponseEntity.ok("로그아웃 완료");
   }
 
+  @GetMapping("/check-email")
+  public ResponseEntity<String> checkEmail(@RequestParam String email) {
+    if (userService.existsByEmail(email)) {
+      return ResponseEntity.status(409).body("이미 사용 중인 이메일입니다.");
+    }
+    return ResponseEntity.ok("사용 가능한 이메일입니다.");
+  }
+
 }
