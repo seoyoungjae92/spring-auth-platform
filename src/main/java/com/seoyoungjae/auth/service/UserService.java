@@ -1,5 +1,7 @@
 package com.seoyoungjae.auth.service;
 
+import java.util.UUID;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
 
   private final UserRepository userRepository;
+  private final MailService mailService;
   private final RefreshTokenRepository refreshTokenRepository;
   private final PasswordEncoder passwordEncoder;
 
@@ -73,5 +76,14 @@ public class UserService {
 
     user.setPassword(passwordEncoder.encode(newPassword));
     userRepository.save(user);
+  }
+
+  public void resetPassword(String email) {
+    User user = findByEmail(email); // 존재하지 않으면 예외
+    String tempPassword = UUID.randomUUID().toString().substring(0, 8);
+    user.setPassword(passwordEncoder.encode(tempPassword));
+    userRepository.save(user);
+
+    mailService.sendPasswordResetMail(user.getEmail(), tempPassword);
   }
 }

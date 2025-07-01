@@ -36,4 +36,14 @@ public class UserController {
         request.getNewPassword());
     return ResponseEntity.ok("비밀번호가 변경되었습니다.");
   }
+
+  @PostMapping("/reset-password")
+  public ResponseEntity<String> resetPassword(@RequestParam String email) {
+    try {
+      userService.resetPassword(email);
+      return ResponseEntity.ok("임시 비밀번호가 이메일로 전송되었습니다.");
+    } catch (Exception e) {
+      return ResponseEntity.badRequest().body(e.getMessage());
+    }
+  }
 }
