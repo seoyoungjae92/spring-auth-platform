@@ -57,4 +57,10 @@ public class UserService {
   public boolean existsByEmail(String email) {
     return userRepository.findByEmail(email).isPresent();
   }
+
+  @Transactional
+  public void deleteByEmail(String email) {
+    refreshTokenRepository.deleteByEmail(email);
+    userRepository.deleteByEmail(email);
+  }
 }
