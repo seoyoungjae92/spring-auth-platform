@@ -2,6 +2,9 @@ server:
   port: 8080
 
 spring:
+  config:
+    import: "optional:classpath:application-oauth.yml"
+
   datasource:
     url: jdbc:mysql://localhost:3306/auth_db?serverTimezone=Asia/Seoul
     username: root

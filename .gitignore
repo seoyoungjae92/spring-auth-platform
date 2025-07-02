@@ -28,3 +28,6 @@ target/
 Thumbs.db
 
 test-output/
+
+# OAuth 민감 정보 제외
+src/main/resources/application-oauth.yml
