@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.seoyoungjae.auth.domain.RefreshToken;
 import com.seoyoungjae.auth.domain.User;
 import com.seoyoungjae.auth.dto.UserDto;
+import com.seoyoungjae.auth.jwt.JwtProvider;
 import com.seoyoungjae.auth.repository.RefreshTokenRepository;
 import com.seoyoungjae.auth.repository.UserRepository;
 
@@ -22,6 +23,7 @@ public class UserService {
   private final MailService mailService;
   private final RefreshTokenRepository refreshTokenRepository;
   private final PasswordEncoder passwordEncoder;
+  private final JwtProvider jwtProvider;
 
   public void register(UserDto userDto) {
     if (userRepository.findByEmail(userDto.getEmail()).isPresent()) {
@@ -32,6 +34,7 @@ public class UserService {
         .email(userDto.getEmail())
         .password(passwordEncoder.encode(userDto.getPassword()))
         .role(User.Role.USER)
+        .isSocial(false)
         .build();
 
     userRepository.save(user);

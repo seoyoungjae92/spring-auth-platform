@@ -1,20 +1,27 @@
 package com.seoyoungjae.auth.controller;
 
-import com.seoyoungjae.auth.domain.RefreshToken;
-import com.seoyoungjae.auth.dto.LoginDto;
-import com.seoyoungjae.auth.dto.TokenResponse;
-import com.seoyoungjae.auth.dto.UserDto;
-import com.seoyoungjae.auth.jwt.JwtUtil;
-import com.seoyoungjae.auth.repository.RefreshTokenRepository;
-import com.seoyoungjae.auth.service.UserService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.seoyoungjae.auth.domain.RefreshToken;
+import com.seoyoungjae.auth.dto.LoginDto;
+import com.seoyoungjae.auth.dto.TokenResponse;
+import com.seoyoungjae.auth.dto.UserDto;
+import com.seoyoungjae.auth.jwt.JwtProvider;
+import com.seoyoungjae.auth.repository.RefreshTokenRepository;
+import com.seoyoungjae.auth.service.UserService;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -26,7 +33,7 @@ public class AuthController {
   private final RefreshTokenRepository refreshTokenRepository;
 
   private final AuthenticationManager authenticationManager;
-  private final JwtUtil jwtUtil;
+  private final JwtProvider jwtProvider;
 
   @PostMapping("/signup")
   public ResponseEntity<String> signup(@RequestBody UserDto userDto) {
@@ -41,8 +48,8 @@ public class AuthController {
 
     try {
       Authentication authentication = authenticationManager.authenticate(token);
-      String accessToken = jwtUtil.generateToken(authentication.getName());
-      String refreshToken = jwtUtil.generateRefreshToken(authentication.getName());
+      String accessToken = jwtProvider.generateAccessToken(authentication.getName());
+      String refreshToken = jwtProvider.generateRefreshToken(authentication.getName());
 
       // 저장
       userService.saveRefreshToken(authentication.getName(), refreshToken,
@@ -61,11 +68,11 @@ public class AuthController {
 
   @PostMapping("/refresh")
   public ResponseEntity<?> refresh(@RequestBody String refreshToken) {
-    if (!jwtUtil.validateToken(refreshToken) || jwtUtil.isTokenExpired(refreshToken)) {
+    if (!jwtProvider.validateToken(refreshToken) || jwtProvider.isTokenExpired(refreshToken)) {
       return ResponseEntity.status(401).body("리프레시 토큰이 유효하지 않음");
     }
 
-    String email = jwtUtil.extractUsername(refreshToken);
+    String email = jwtProvider.getEmailFromToken(refreshToken);
     RefreshToken savedToken = refreshTokenRepository.findByToken(refreshToken)
         .orElseThrow(() -> new RuntimeException("저장된 리프레시 토큰 없음"));
 
@@ -73,7 +80,7 @@ public class AuthController {
       return ResponseEntity.status(403).body("토큰의 소유자 불일치");
     }
 
-    String newAccessToken = jwtUtil.generateToken(email);
+    String newAccessToken = jwtProvider.generateAccessToken(email);
     return ResponseEntity.ok(TokenResponse.builder()
         .accessToken(newAccessToken)
         .refreshToken(refreshToken)

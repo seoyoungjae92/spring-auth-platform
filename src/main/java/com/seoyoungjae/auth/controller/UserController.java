@@ -1,6 +1,7 @@
 package com.seoyoungjae.auth.controller;
 
 import com.seoyoungjae.auth.domain.User;
+import com.seoyoungjae.auth.dto.EmailRequest;
 import com.seoyoungjae.auth.dto.PasswordChangeRequest;
 import com.seoyoungjae.auth.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -38,9 +39,9 @@ public class UserController {
   }
 
   @PostMapping("/reset-password")
-  public ResponseEntity<String> resetPassword(@RequestParam String email) {
+  public ResponseEntity<String> resetPassword(@RequestBody EmailRequest request) {
     try {
-      userService.resetPassword(email);
+      userService.resetPassword(request.getEmail());
       return ResponseEntity.ok("임시 비밀번호가 이메일로 전송되었습니다.");
     } catch (Exception e) {
       return ResponseEntity.badRequest().body(e.getMessage());
