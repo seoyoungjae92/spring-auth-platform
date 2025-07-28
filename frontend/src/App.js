@@ -6,6 +6,8 @@ import ChangePasswordPage from "./pages/ChangePasswordPage";
 import DeleteAccountPage from "./pages/DeleteAccountPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import OAuthSuccessPage from "./pages/OAuthSuccessPage";
+import MfaVerifyPage from "./pages/MfaVerifyPage";
+import TotpSetupPage from "./pages/TotpSetupPage";
 import SignupPage from "./pages/SignupPage";
 import HomePage from "./pages/HomePage";
 import PrivateRoute from "./components/PrivateRoute";
@@ -19,6 +21,8 @@ function App() {
                 <Route path="/signup" element={<SignupPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/oauth-success" element={<OAuthSuccessPage />} />
+                <Route path="/mfa-verify" element={<MfaVerifyPage />} />
+                <Route path="/totp-setup" element={<TotpSetupPage />} />
 
                 {/* 보호된 페이지 */}
                 <Route

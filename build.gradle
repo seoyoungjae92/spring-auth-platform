@@ -26,6 +26,11 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
+    implementation 'com.eatthepath:java-otp:0.4.0'          // TOTP 생성/검증
+    implementation 'commons-codec:commons-codec:1.16.0'      // Base32 인/디코딩
+    implementation 'com.google.zxing:core:3.5.2'            // QR 코드 생성
+    implementation 'com.google.zxing:javase:3.5.2'
+
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5' // JSON 파싱용

@@ -2,15 +2,18 @@ package com.seoyoungjae.auth.service;
 
 import java.util.UUID;
 
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.seoyoungjae.auth.domain.RefreshToken;
 import com.seoyoungjae.auth.domain.User;
+import com.seoyoungjae.auth.dto.TotpSetupResponse;
 import com.seoyoungjae.auth.dto.UserDto;
 import com.seoyoungjae.auth.jwt.JwtProvider;
 import com.seoyoungjae.auth.repository.RefreshTokenRepository;
 import com.seoyoungjae.auth.repository.UserRepository;
+import com.seoyoungjae.auth.util.TOTPUtil;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +38,7 @@ public class UserService {
         .password(passwordEncoder.encode(userDto.getPassword()))
         .role(User.Role.USER)
         .isSocial(false)
+        .totpEnabled(userDto.isTotpEnabled())
         .build();
 
     userRepository.save(user);
@@ -88,5 +92,20 @@ public class UserService {
     userRepository.save(user);
 
     mailService.sendPasswordResetMail(user.getEmail(), tempPassword);
+  }
+
+  public TotpSetupResponse setupTotp(String email) {
+    String secret = TOTPUtil.generateSecret();
+    String qrUrl = TOTPUtil.getOtpAuthURL("spring-auth-platform", email, secret);
+
+    // 임시로 secret을 저장 (DB에 저장 전까지는 메모리 등에 보관하거나 별도 정책 필요)
+    // 여기선 바로 저장하는 예시로 처리
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+    user.setTotpSecret(secret);
+    userRepository.save(user);
+
+    return new TotpSetupResponse(secret, qrUrl);
   }
 }

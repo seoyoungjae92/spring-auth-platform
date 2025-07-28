@@ -25,6 +25,12 @@ public class User {
 
   private boolean isSocial;
 
+  @Column(name = "totp_enabled", nullable = false)
+  private boolean totpEnabled;
+
+  @Column(name = "totp_secret")
+  private String totpSecret;
+
   public enum Role {
     USER, ADMIN
   }

@@ -17,11 +17,20 @@ function LoginPage() {
                 password,
             });
 
-            localStorage.setItem("accessToken", res.data.accessToken);
-            localStorage.setItem("refreshToken", res.data.refreshToken);
-
-            window.alert("로그인 성공!");
-            navigate("/home");
+            if (res.data.accessToken) {
+                localStorage.setItem("accessToken", res.data.accessToken);
+                localStorage.setItem("refreshToken", res.data.refreshToken);
+                window.alert("로그인 성공!");
+                navigate("/home");
+            } else if (res.data.mfaToken) {
+                // MFA 대상자일 경우
+                window.alert("2단계 인증이 필요합니다.");
+                navigate("/mfa-verify", {
+                    state: { mfaToken: res.data.mfaToken }
+                });
+            } else {
+                throw new Error("서버 응답이 올바르지 않습니다.");
+            }
         } catch (err) {
             setError("로그인 실패: " + (err.response?.data || "서버 오류"));
         }

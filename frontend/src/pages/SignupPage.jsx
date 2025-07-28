@@ -7,6 +7,8 @@ function SignupPage() {
     const [password, setPassword] = useState("");
     const [isEmailAvailable, setIsEmailAvailable] = useState(false);
     const [emailChecked, setEmailChecked] = useState(false); // 중복 확인 여부
+    const [totpEnabled, setTotpEnabled] = useState(false);
+
     const navigate = useNavigate();
 
     const checkEmail = async () => {
@@ -37,9 +39,14 @@ function SignupPage() {
         }
 
         try {
-            await axios.post("http://localhost:8080/api/auth/signup", { email, password });
-            alert("회원가입 완료! 로그인 해주세요.");
-            navigate("/login");
+            await axios.post("http://localhost:8080/api/auth/signup", { email, password, totpEnabled });
+            alert("회원가입 완료!");
+
+            if (totpEnabled) {
+                navigate("/totp-setup", { state: { email } });
+            } else {
+                navigate("/login");
+            }
         } catch (err) {
             alert("회원가입 실패: " + (err.response?.data || "서버 오류"));
         }
@@ -70,6 +77,15 @@ function SignupPage() {
                     placeholder="비밀번호"
                     required
                 />
+                <br />
+                <label>
+                    <input
+                        type="checkbox"
+                        checked={totpEnabled}
+                        onChange={(e) => setTotpEnabled(e.target.checked)}
+                    />
+                    2단계 인증 사용 (권장)
+                </label>
                 <br />
                 <button type="submit">가입하기</button>
             </form>
