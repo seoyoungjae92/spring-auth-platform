@@ -5,6 +5,7 @@ import axios from "axios";
 function HomePage() {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
+    const [lastLogin, setLastLogin] = useState(null);
 
     useEffect(() => {
         const token = localStorage.getItem("accessToken");
@@ -16,13 +17,20 @@ function HomePage() {
         axios.get("http://localhost:8080/api/user/me", {
             headers: { Authorization: `Bearer ${token}` },
         })
-            .then(res => setUser(res.data))
+            .then(res => {
+                setUser(res.data);
+                return axios.get("http://localhost:8080/api/user/me/last-login", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+            })
+            .then(res => setLastLogin(res.data))
             .catch(() => {
                 alert("인증 정보가 없습니다. 다시 로그인해주세요.");
                 localStorage.clear();
                 navigate("/login");
             });
     }, [navigate]);
+
 
     const logout = () => {
         localStorage.removeItem("accessToken");
@@ -36,6 +44,15 @@ function HomePage() {
             <h2>홈페이지</h2>
             <p>로그인에 성공했습니다.</p>
 
+            {lastLogin && (
+                <div style={{ marginTop: 10 }}>
+                    <p><b>마지막 로그인:</b></p>
+                    <p>IP: {lastLogin.ipAddress}</p>
+                    <p>시간: {lastLogin.loginAt}</p>
+                    <p>User-Agent: {lastLogin.userAgent}</p>
+                </div>
+            )}
+
             {user && !user.social && (
                 <>
                     <button onClick={() => navigate("/change-password")}>비밀번호 변경</button>
@@ -47,6 +64,16 @@ function HomePage() {
 
             <button onClick={() => navigate("/delete-account")}>회원 탈퇴</button>
             <br />
+
+            {user?.role === "ADMIN" && (
+                <>
+                    <br />
+                    <button onClick={() => navigate("/login-history")}>전체 로그인 기록 보기</button>
+                </>
+            )}
+
+            <br />
+
             <button onClick={logout}>로그아웃</button>
         </div>
     );

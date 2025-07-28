@@ -2,6 +2,7 @@ package com.seoyoungjae.auth.handler;
 
 import com.seoyoungjae.auth.jwt.JwtProvider;
 import com.seoyoungjae.auth.repository.UserRepository;
+import com.seoyoungjae.auth.service.LoginHistoryService;
 import com.seoyoungjae.auth.service.RefreshTokenService;
 import com.seoyoungjae.auth.domain.User;
 import jakarta.servlet.ServletException;
@@ -22,6 +23,7 @@ public class OAuth2SuccessHandler implements org.springframework.security.web.au
   private final JwtProvider jwtProvider;
   private final RefreshTokenService refreshTokenService;
   private final UserRepository userRepository;
+  private final LoginHistoryService loginHistoryService;
 
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication)
@@ -31,7 +33,7 @@ public class OAuth2SuccessHandler implements org.springframework.security.web.au
     String email = oauth2User.getAttribute("email");
 
     // 유저가 없으면 회원가입
-    userRepository.findByEmail(email).orElseGet(() -> {
+    User user = userRepository.findByEmail(email).orElseGet(() -> {
       return userRepository.save(User.builder()
           .email(email)
           .password("") // 소셜 로그인은 비밀번호 없음
@@ -44,6 +46,8 @@ public class OAuth2SuccessHandler implements org.springframework.security.web.au
     String refreshToken = jwtProvider.generateRefreshToken(email);
 
     refreshTokenService.saveOrUpdateRefreshToken(email, refreshToken);
+
+    loginHistoryService.recordLogin(user.getId(), request);
 
     String redirectUrl = UriComponentsBuilder.fromUriString("http://localhost:3000/oauth-success")
         .queryParam("accessToken", accessToken)

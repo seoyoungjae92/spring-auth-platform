@@ -1,5 +1,9 @@
 package com.seoyoungjae.auth.controller;
 
+import static com.fasterxml.jackson.databind.type.LogicalType.*;
+
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -15,12 +19,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.seoyoungjae.auth.domain.RefreshToken;
 import com.seoyoungjae.auth.dto.LoginDto;
+import com.seoyoungjae.auth.dto.MfaVerifyRequest;
 import com.seoyoungjae.auth.dto.TokenResponse;
+import com.seoyoungjae.auth.dto.TotpSetupResponse;
 import com.seoyoungjae.auth.dto.UserDto;
 import com.seoyoungjae.auth.jwt.JwtProvider;
 import com.seoyoungjae.auth.repository.RefreshTokenRepository;
+import com.seoyoungjae.auth.service.LoginHistoryService;
+import com.seoyoungjae.auth.service.TotpService;
 import com.seoyoungjae.auth.service.UserService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -29,6 +38,8 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
   private final UserService userService;
+  private final TotpService totpService;
+  private final LoginHistoryService loginHistoryService;
 
   private final RefreshTokenRepository refreshTokenRepository;
 
@@ -42,12 +53,24 @@ public class AuthController {
   }
 
   @PostMapping("/login")
-  public ResponseEntity<?> login(@RequestBody LoginDto loginDto) {
+  public ResponseEntity<?> login(HttpServletRequest request, @RequestBody LoginDto loginDto) {
     UsernamePasswordAuthenticationToken token =
         new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword());
 
     try {
       Authentication authentication = authenticationManager.authenticate(token);
+
+      // 유저 조회
+      var user = userService.findByEmail(authentication.getName());
+      loginHistoryService.recordLogin(user.getId(), request);
+
+      // MFA 활성화 사용자면, access/refresh 대신 mfaToken 반환
+      if (user.isTotpEnabled()) {
+        String mfaToken = jwtProvider.generateMfaToken(user.getEmail());
+        return ResponseEntity.ok()
+            .body(java.util.Map.of("mfaRequired", true, "mfaToken", mfaToken));
+      }
+
       String accessToken = jwtProvider.generateAccessToken(authentication.getName());
       String refreshToken = jwtProvider.generateRefreshToken(authentication.getName());
 
@@ -99,6 +122,42 @@ public class AuthController {
       return ResponseEntity.status(409).body("이미 사용 중인 이메일입니다.");
     }
     return ResponseEntity.ok("사용 가능한 이메일입니다.");
+  }
+
+  @PostMapping("/mfa/verify")
+  public ResponseEntity<?> verifyMfa(@RequestBody MfaVerifyRequest request) {
+
+    // 1) mfaToken 검증
+    if (!jwtProvider.validateToken(request.getMfaToken()) ||
+        !jwtProvider.isMfaToken(request.getMfaToken())) {
+      return ResponseEntity.status(401).body("유효하지 않은 MFA 토큰입니다.");
+    }
+
+    String email = jwtProvider.getEmailFromToken(request.getMfaToken());
+
+    // 2) 코드 검증
+    var user = userService.findByEmail(email);
+    boolean ok = totpService.verifyCode(user.getTotpSecret(), request.getCode());
+    if (!ok) {
+      return ResponseEntity.status(401).body("OTP 코드가 올바르지 않습니다.");
+    }
+
+    // 3) 정상이라면 최종 access/refresh 발급
+    String accessToken = jwtProvider.generateAccessToken(email);
+    String refreshToken = jwtProvider.generateRefreshToken(email);
+
+    userService.saveRefreshToken(email, refreshToken,
+        System.currentTimeMillis() + jwtProvider.getRefreshTokenExpirationMs());
+
+    return ResponseEntity.ok(TokenResponse.builder()
+        .accessToken(accessToken)
+        .refreshToken(refreshToken)
+        .build());
+  }
+
+  @GetMapping("/totp/setup")
+  public ResponseEntity<TotpSetupResponse> setupTotp(@RequestParam String email) {
+    return ResponseEntity.ok(userService.setupTotp(email));
   }
 
 }

@@ -19,6 +19,7 @@ public class JwtProvider {
 
   private final long ACCESS_TOKEN_VALIDITY = 1000L * 60 * 60; // 1시간
   private final long REFRESH_TOKEN_VALIDITY = 1000L * 60 * 60 * 24 * 7; // 7일
+  private final long MFA_TOKEN_VALIDITY = 1000L * 60 * 5;            // 5m
 
   @PostConstruct
   public void init() {
@@ -41,6 +42,27 @@ public class JwtProvider {
         .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_VALIDITY))
         .signWith(key, SignatureAlgorithm.HS256)
         .compact();
+  }
+
+  public String generateMfaToken(String email) {
+    return Jwts.builder()
+        .setSubject(email)
+        .claim("mfa", true)
+        .setIssuedAt(new Date())
+        .setExpiration(new Date(System.currentTimeMillis() + MFA_TOKEN_VALIDITY))
+        .signWith(key, SignatureAlgorithm.HS256)
+        .compact();
+  }
+
+  public boolean isMfaToken(String token) {
+    try {
+      Claims claims = Jwts.parserBuilder().setSigningKey(key).build()
+          .parseClaimsJws(token).getBody();
+      Boolean mfa = claims.get("mfa", Boolean.class);
+      return Boolean.TRUE.equals(mfa);
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   public String getEmailFromToken(String token) {

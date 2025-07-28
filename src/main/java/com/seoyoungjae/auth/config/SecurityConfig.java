@@ -41,7 +41,8 @@ public class SecurityConfig {
         .formLogin(formLogin -> formLogin.disable())
         .logout(logout -> logout.disable())
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/auth/**", "/oauth2/**", "/api/user/**").permitAll()
+            .requestMatchers("/api/auth/**", "/oauth2/**", "/api/user/**", "/api/mfa/**").permitAll()
+            .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .anyRequest().authenticated()
         )
         .oauth2Login(oauth -> oauth
