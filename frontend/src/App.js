@@ -10,6 +10,7 @@ import MfaVerifyPage from "./pages/MfaVerifyPage";
 import TotpSetupPage from "./pages/TotpSetupPage";
 import SignupPage from "./pages/SignupPage";
 import HomePage from "./pages/HomePage";
+import LoginHistoryPage from "./pages/LoginHistoryPage";
 import PrivateRoute from "./components/PrivateRoute";
 
 function App() {
@@ -30,6 +31,14 @@ function App() {
                     element={
                         <PrivateRoute>
                             <HomePage />
+                        </PrivateRoute>
+                    }
+                />
+                <Route
+                    path="/login-history"
+                    element={
+                        <PrivateRoute>
+                            <LoginHistoryPage />
                         </PrivateRoute>
                     }
                 />

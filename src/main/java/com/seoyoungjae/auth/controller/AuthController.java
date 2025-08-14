@@ -25,9 +25,14 @@ import com.seoyoungjae.auth.dto.TotpSetupResponse;
 import com.seoyoungjae.auth.dto.UserDto;
 import com.seoyoungjae.auth.jwt.JwtProvider;
 import com.seoyoungjae.auth.repository.RefreshTokenRepository;
+<<<<<<< HEAD
+=======
+import com.seoyoungjae.auth.service.LoginHistoryService;
+>>>>>>> feature/login-history
 import com.seoyoungjae.auth.service.TotpService;
 import com.seoyoungjae.auth.service.UserService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -37,6 +42,10 @@ public class AuthController {
 
   private final UserService userService;
   private final TotpService totpService;
+<<<<<<< HEAD
+=======
+  private final LoginHistoryService loginHistoryService;
+>>>>>>> feature/login-history
 
   private final RefreshTokenRepository refreshTokenRepository;
 
@@ -50,7 +59,7 @@ public class AuthController {
   }
 
   @PostMapping("/login")
-  public ResponseEntity<?> login(@RequestBody LoginDto loginDto) {
+  public ResponseEntity<?> login(HttpServletRequest request, @RequestBody LoginDto loginDto) {
     UsernamePasswordAuthenticationToken token =
         new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword());
 
@@ -59,6 +68,7 @@ public class AuthController {
 
       // 유저 조회
       var user = userService.findByEmail(authentication.getName());
+      loginHistoryService.recordLogin(user.getId(), request);
 
       // MFA 활성화 사용자면, access/refresh 대신 mfaToken 반환
       if (user.isTotpEnabled()) {
