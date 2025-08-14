@@ -25,10 +25,7 @@ import com.seoyoungjae.auth.dto.TotpSetupResponse;
 import com.seoyoungjae.auth.dto.UserDto;
 import com.seoyoungjae.auth.jwt.JwtProvider;
 import com.seoyoungjae.auth.repository.RefreshTokenRepository;
-<<<<<<< HEAD
-=======
 import com.seoyoungjae.auth.service.LoginHistoryService;
->>>>>>> feature/login-history
 import com.seoyoungjae.auth.service.TotpService;
 import com.seoyoungjae.auth.service.UserService;
 
@@ -42,10 +39,8 @@ public class AuthController {
 
   private final UserService userService;
   private final TotpService totpService;
-<<<<<<< HEAD
-=======
+
   private final LoginHistoryService loginHistoryService;
->>>>>>> feature/login-history
 
   private final RefreshTokenRepository refreshTokenRepository;
 
